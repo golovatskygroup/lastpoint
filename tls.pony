@@ -76,7 +76,6 @@ class TLSServerNotify is TCPListenNotify
   let _keepalive_timeout: U64
   let _max_body_size: USize
   var _connection_count: USize = 0
-  var _ssl_context: (net_ssl.SSLContext | None) = None
 
   new iso create(
     env: Env,
@@ -107,25 +106,9 @@ class TLSServerNotify is TCPListenNotify
   fun ref listening(listen: TCPListener ref) =>
     """
     Called when server starts listening.
-    Initialize SSL context for accepting connections.
+    Log server start - SSL context will be created per connection.
     """
-    try
-      let sslctx = recover
-        net_ssl.SSLContext
-          .> set_cert(
-            FilePath(FileAuth(_env.root), _tls_config.cert_file),
-            FilePath(FileAuth(_env.root), _tls_config.key_file))?
-      end
-
-      // Set ALPN resolver for protocol negotiation
-      sslctx.alpn_set_resolver(net_ssl.ALPNStandardProtocolResolver(_tls_config.alpn_protocols))
-
-      _ssl_context = consume sslctx
-      _logger.info("HTTPS server listening on https://" + _host + ":" + _port)
-    else
-      _logger.log_error("TLS initialization failed: unable to load certificates")
-      listen.dispose()
-    end
+    _logger.info("HTTPS server listening on https://" + _host + ":" + _port)
 
   fun ref not_listening(listen: TCPListener ref) =>
     """
@@ -142,43 +125,38 @@ class TLSServerNotify is TCPListenNotify
   fun ref connected(listen: TCPListener ref): TCPConnectionNotify iso^ =>
     """
     Called when a new client connects.
-    Creates a TLS connection handler that will perform SSL handshake
-    and ALPN negotiation before selecting HTTP/1.1 or HTTP/2 handler.
+    Creates a new SSL context and TLS connection handler for each connection
+    to avoid race conditions with concurrent handshakes.
     """
     _connection_count = _connection_count + 1
 
-    // Create a new SSL connection for this client
-    match _ssl_context
-    | let sslctx: net_ssl.SSLContext =>
-      try
-        let ssl = sslctx.server()?
-        let protocol_handler = ProtocolSelector(
-          _env,
-          _router,
-          _logger,
-          _connection_count,
-          _read_timeout,
-          _write_timeout,
-          _keepalive_timeout,
-          _max_body_size
-        )
-        net_ssl.SSLConnection(consume protocol_handler, consume ssl)
-      else
-        // SSL setup failed, fallback to HTTP
-        _logger.log_error("Failed to create SSL connection, falling back to HTTP")
-        HTTPConnection(
-          _env,
-          _router,
-          _logger,
-          _connection_count,
-          _read_timeout,
-          _write_timeout,
-          _keepalive_timeout,
-          _max_body_size
-        )
+    // Create a new SSL context for this connection (avoids race conditions)
+    try
+      let sslctx = recover
+        net_ssl.SSLContext
+          .> set_cert(
+            FilePath(FileAuth(_env.root), _tls_config.cert_file),
+            FilePath(FileAuth(_env.root), _tls_config.key_file))?
       end
+
+      // Set ALPN resolver for protocol negotiation
+      sslctx.alpn_set_resolver(net_ssl.ALPNStandardProtocolResolver(_tls_config.alpn_protocols))
+
+      let ssl = sslctx.server()?
+      let protocol_handler = ProtocolSelector(
+        _env,
+        _router,
+        _logger,
+        _connection_count,
+        _read_timeout,
+        _write_timeout,
+        _keepalive_timeout,
+        _max_body_size
+      )
+      net_ssl.SSLConnection(consume protocol_handler, consume ssl)
     else
-      // No SSL context available, fallback to plain HTTP
+      // SSL setup failed, fallback to HTTP
+      _logger.log_error("TLS initialization failed for connection " + _connection_count.string() + ", falling back to HTTP")
       HTTPConnection(
         _env,
         _router,

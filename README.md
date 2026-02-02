@@ -87,6 +87,17 @@ Environment variables: `HTTP_SERVER_HOST`, `HTTP_SERVER_PORT`, `HTTP_SERVER_TLS_
 
 On macOS with Homebrew: `brew install openssl`
 
+## Benchmarks
+
+Performance comparison with Go (Apple Silicon M1, 4 threads, 100 connections):
+
+| Protocol | Pony | Go | vs Go |
+|----------|------|-----|-------|
+| HTTP/1.1 | 100,426 req/s | 133,126 req/s | 75% |
+| HTTP/2 (50cx100s) | 107,705 req/s | 318,109 req/s | 34% |
+
+HTTP/2 tested with `h2load -n100000 -c50 -m100` (50 connections, 100 streams each).
+
 ## Test
 
 ```bash
