@@ -1,0 +1,31 @@
+# Binaries
+http_server
+*.o
+*.a
+*.so
+*.dylib
+
+# Debug symbols
+*.dSYM/
+
+# Build directories
+build/
+
+# Logs
+*.log
+server.pid
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.iml

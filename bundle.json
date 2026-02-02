@@ -1,0 +1,16 @@
+{
+  "name": "http_server",
+  "version": "0.1.0",
+  "description": "HTTP/1.1 and HTTP/2 server implementation in Pony with TLS support",
+  "homepage": "",
+  "license": "",
+  "documentation_url": "",
+  "version_url": "",
+  "type": "program",
+  "deps": [
+    {
+      "name": "net_ssl",
+      "version": ">= 1.0.0"
+    }
+  ]
+}

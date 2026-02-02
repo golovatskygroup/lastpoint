@@ -1,0 +1,23 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": "18080",
+    "tls": {
+      "enabled": false,
+      "cert_file": "",
+      "key_file": "",
+      "min_version": "1.2",
+      "max_version": "1.3",
+      "alpn_protocols": ["h2", "http/1.1"]
+    }
+  },
+  "limits": {
+    "max_body_size": 1048576,
+    "max_headers_size": 16384,
+    "timeout_seconds": 30
+  },
+  "logging": {
+    "level": "info",
+    "format": "text"
+  }
+}
