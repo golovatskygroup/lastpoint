@@ -31,7 +31,12 @@ actor Main
 Build and run:
 
 ```bash
+# macOS with Homebrew OpenSSL
+ponyc -D openssl_3.0.x --linker "ld -L/opt/homebrew/opt/openssl@3/lib -lssl -lcrypto"
+
+# Linux
 ponyc -D openssl_3.0.x
+
 ./http_server
 ```
 
@@ -79,6 +84,20 @@ Environment variables: `HTTP_SERVER_HOST`, `HTTP_SERVER_PORT`, `HTTP_SERVER_TLS_
 
 - Pony compiler 0.60+
 - OpenSSL 3.0+
+
+On macOS with Homebrew: `brew install openssl`
+
+## Test
+
+```bash
+# Start server
+./http_server
+
+# In another terminal
+curl http://localhost:8080/ping    # PONG
+curl http://localhost:8080/time    # Unix timestamp
+curl http://localhost:8080/echo/hello  # hello
+```
 
 ## License
 
