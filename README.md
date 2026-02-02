@@ -91,10 +91,30 @@ On macOS with Homebrew: `brew install openssl`
 
 Performance comparison with Go (Apple Silicon M1, 4 threads, 100 connections):
 
+### Throughput
+
 | Protocol | Pony | Go | vs Go |
 |----------|------|-----|-------|
 | HTTP/1.1 | 100,426 req/s | 133,126 req/s | 75% |
 | HTTP/2 (50cx100s) | 107,705 req/s | 318,109 req/s | 34% |
+
+### Latency (HTTP/1.1)
+
+| Percentile | Pony | Go |
+|------------|------|-----|
+| p50 | 748 µs | 720 µs |
+| p75 | 1.10 ms | 785 µs |
+| p90 | 2.02 ms | 0.91 ms |
+| p99 | 9.63 ms | 1.50 ms |
+| Avg | 1.22 ms | 737 µs |
+| StdDev | 1.80 ms | 210 µs |
+
+### Latency (HTTP/2, 50cx100s)
+
+| Metric | Pony | Go |
+|--------|------|-----|
+| Mean | 37.40 ms | 12.61 ms |
+| StdDev | 22.07 ms | 12.81 ms |
 
 HTTP/2 tested with `h2load -n100000 -c50 -m100` (50 connections, 100 streams each).
 
